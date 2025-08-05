@@ -2,94 +2,94 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>In-Memory Image Links</title>
+  <title>Persistent Image Memory</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      padding: 2rem;
+      font-family: sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 1.2rem;
-      background: #f0f0f0;
+      padding: 2rem;
+      background: #f4f4f4;
     }
 
     input[type="file"] {
-      padding: 1rem;
-      border-radius: 8px;
+      margin-bottom: 1rem;
     }
 
-    .image-container {
+    .image-block {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
       align-items: center;
+      margin-bottom: 2rem;
     }
 
     img {
       max-width: 300px;
       border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      margin-bottom: 0.5rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
 
     .link {
       word-break: break-all;
-      background: #eee;
-      padding: 10px;
-      border-radius: 5px;
+      background: #e0e0e0;
+      padding: 8px;
+      border-radius: 6px;
     }
   </style>
 </head>
 <body>
 
-  <h2>Select Image</h2>
-  <input type="file" id="imageInput" accept="image/*" />
-  <div id="gallery"></div>
+  <h2>Select an Image</h2>
+  <input type="file" accept="image/*" id="imageInput" />
+  <div id="imageGallery"></div>
 
   <script>
     const imageInput = document.getElementById("imageInput");
-    const gallery = document.getElementById("gallery");
+    const imageGallery = document.getElementById("imageGallery");
 
-    function saveLinks(links) {
-      localStorage.setItem("image_links", JSON.stringify(links));
+    function saveImage(base64) {
+      const stored = JSON.parse(localStorage.getItem("stored_images") || "[]");
+      stored.push(base64);
+      localStorage.setItem("stored_images", JSON.stringify(stored));
     }
 
-    function loadLinks() {
-      return JSON.parse(localStorage.getItem("image_links") || "[]");
-    }
-
-    function displayImage(url) {
+    function displayImage(base64) {
       const container = document.createElement("div");
-      container.className = "image-container";
+      container.className = "image-block";
 
       const img = document.createElement("img");
-      img.src = url;
+      img.src = base64;
 
       const link = document.createElement("div");
       link.className = "link";
-      link.innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
+      link.innerHTML = `<a href="${base64}" target="_blank">${base64}</a>`;
 
       container.appendChild(img);
       container.appendChild(link);
-      gallery.appendChild(container);
+      imageGallery.appendChild(container);
+    }
+
+    function loadImages() {
+      const stored = JSON.parse(localStorage.getItem("stored_images") || "[]");
+      stored.forEach(displayImage);
     }
 
     imageInput.addEventListener("change", () => {
       const file = imageInput.files[0];
-      if (file) {
-        const blobURL = URL.createObjectURL(file);
-        const links = loadLinks();
-        links.push(blobURL);
-        saveLinks(links);
-        displayImage(blobURL);
-      }
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const base64 = e.target.result;
+        saveImage(base64);
+        displayImage(base64);
+      };
+      reader.readAsDataURL(file);
     });
 
-    // On page load, restore all previous blob links
-    window.addEventListener("DOMContentLoaded", () => {
-      const links = loadLinks();
-      links.forEach(url => displayImage(url));
-    });
+    loadImages();
   </script>
 
 </body>
