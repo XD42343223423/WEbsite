@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html>
-<head><title>Uploader</title></head>
-<body style="background:#111;color:#fff;text-align:center;padding:40px;">
+<head>
+  <title>Image Uploader</title>
+</head>
+<body style="background:#111;color:white;text-align:center;padding:40px;font-family:sans-serif">
   <h1>Upload Image</h1>
   <input type="file" id="fileInput"><br><br>
   <button onclick="upload()">Upload</button>
-  <p id="link"></p>
+  <p id="link" style="margin-top:20px;"></p>
+
   <script>
     async function upload() {
       const file = document.getElementById("fileInput").files[0];
@@ -20,11 +23,20 @@
           body: formData,
         });
 
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(errorText);
+        }
+
         const data = await res.json();
-        document.getElementById("link").innerHTML = `<a href="${data.url}" target="_blank">${data.url}</a>`;
-      } catch (e) {
-        alert("Upload failed");
-        console.error(e);
+        const link = document.getElementById("link");
+        link.innerHTML = `
+          ✅ Uploaded: <a href="${data.url}" target="_blank" style="color:lightgreen;">${data.url}</a><br>
+          <img src="${data.url}" alt="Uploaded Image" style="max-width:400px;margin-top:10px;">
+        `;
+      } catch (err) {
+        alert("Upload failed.");
+        console.error(err);
       }
     }
   </script>
