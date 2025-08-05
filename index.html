@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Image Uploader</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 40px;
+      background: #111;
+      color: #fff;
+      text-align: center;
+    }
+    #uploaded-img {
+      max-width: 100%;
+      margin-top: 20px;
+      border: 2px solid #444;
+    }
+    input[type="file"] {
+      padding: 10px;
+      background: #222;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Upload Image to imgbb</h1>
+  <input type="file" id="fileInput" />
+  <br><br>
+  <button onclick="uploadImage()">Upload</button>
+
+  <div id="result"></div>
+  <img id="uploaded-img" src="" alt="Uploaded Image" style="display: none;">
+
+  <script>
+    const apiKey = 'YOUR_IMGBB_API_KEY'; // replace this with your real key
+
+    function uploadImage() {
+      const input = document.getElementById('fileInput');
+      const file = input.files[0];
+      if (!file) return alert('No file selected');
+
+      const reader = new FileReader();
+      reader.onloadend = function () {
+        const base64 = reader.result.split(',')[1];
+        const formData = new FormData();
+        formData.append('key', apiKey);
+        formData.append('image', base64);
+
+        fetch('https://api.imgbb.com/1/upload', {
+          method: 'POST',
+          body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+          const imgURL = data.data.url;
+          document.getElementById('result').innerText = imgURL;
+          const img = document.getElementById('uploaded-img');
+          img.src = imgURL;
+          img.style.display = 'block';
+        })
+        .catch(err => {
+          alert('Upload failed');
+          console.error(err);
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  </script>
+
+</body>
+</html>
