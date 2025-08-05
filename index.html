@@ -2,71 +2,29 @@
 <html>
 <head>
   <title>Image Uploader</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 40px;
-      background: #111;
-      color: #fff;
-      text-align: center;
-    }
-    #uploaded-img {
-      max-width: 100%;
-      margin-top: 20px;
-      border: 2px solid #444;
-    }
-    input[type="file"] {
-      padding: 10px;
-      background: #222;
-      color: white;
-    }
-  </style>
 </head>
-<body>
-
-  <h1>Upload Image to imgbb</h1>
-  <input type="file" id="fileInput" />
-  <br><br>
-  <button onclick="uploadImage()">Upload</button>
-
-  <div id="result"></div>
-  <img id="uploaded-img" src="" alt="Uploaded Image" style="display: none;">
+<body style="background:#111; color:white; font-family:sans-serif; text-align:center; padding:40px;">
+  <h1>Upload Image</h1>
+  <input type="file" id="fileInput"><br><br>
+  <button onclick="upload()">Upload</button>
+  <p id="link"></p>
 
   <script>
-    const apiKey = 'YOUR_IMGBB_API_KEY'; // replace this with your real key
+    async function upload() {
+      const file = document.getElementById("fileInput").files[0];
+      if (!file) return alert("Pick a file");
 
-    function uploadImage() {
-      const input = document.getElementById('fileInput');
-      const file = input.files[0];
-      if (!file) return alert('No file selected');
+      const formData = new FormData();
+      formData.append("file", file);
 
-      const reader = new FileReader();
-      reader.onloadend = function () {
-        const base64 = reader.result.split(',')[1];
-        const formData = new FormData();
-        formData.append('key', apiKey);
-        formData.append('image', base64);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData
+      });
 
-        fetch('https://api.imgbb.com/1/upload', {
-          method: 'POST',
-          body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-          const imgURL = data.data.url;
-          document.getElementById('result').innerText = imgURL;
-          const img = document.getElementById('uploaded-img');
-          img.src = imgURL;
-          img.style.display = 'block';
-        })
-        .catch(err => {
-          alert('Upload failed');
-          console.error(err);
-        });
-      };
-      reader.readAsDataURL(file);
+      const data = await res.json();
+      document.getElementById("link").innerHTML = `<a href="${data.url}" target="_blank">${data.url}</a>`;
     }
   </script>
-
 </body>
 </html>
