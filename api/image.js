@@ -3,8 +3,7 @@ import path from "path";
 
 export default async function handler(req, res) {
   const id = req.query.id;
-  const fileMap = globalThis.uploadedFiles || {};
-  const filepath = fileMap[id];
+  const filepath = globalThis.uploadedFiles?.[id];
 
   if (!filepath || !fs.existsSync(filepath)) {
     res.status(404).send("File not found");
@@ -12,14 +11,15 @@ export default async function handler(req, res) {
   }
 
   const ext = path.extname(filepath).toLowerCase();
-  const mime = {
+  const mimeTypes = {
     ".jpg": "image/jpeg",
     ".jpeg": "image/jpeg",
     ".png": "image/png",
     ".gif": "image/gif",
-    ".webp": "image/webp",
-  }[ext] || "application/octet-stream";
+    ".webp": "image/webp"
+  };
 
+  const mime = mimeTypes[ext] || "application/octet-stream";
   res.setHeader("Content-Type", mime);
   fs.createReadStream(filepath).pipe(res);
 }
