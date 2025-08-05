@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Image Upload</title>
+  <title>Image Uploader</title>
   <style>
     body {
       background: #111;
@@ -55,7 +55,7 @@
       formData.append("file", file);
 
       try {
-        const res = await fetch("/api/api.js", {
+        const res = await fetch("/api/upload", {
           method: "POST",
           body: formData
         });
