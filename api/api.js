@@ -51,7 +51,7 @@ export default async function handler(req, res) {
       globalThis.uploadedFiles[name] = fullPath;
 
       const base = req.headers.host.startsWith("localhost") ? "http" : "https";
-      const url = `${base}://${req.headers.host}/api/upload?id=${encodeURIComponent(name)}`;
+      const url = `${base}://${req.headers.host}/api/api?id=${encodeURIComponent(name)}`;
 
       res.status(200).json({ url });
     });
