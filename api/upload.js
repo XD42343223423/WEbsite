@@ -1,7 +1,6 @@
 import formidable from "formidable";
 import fs from "fs";
 import path from "path";
-import { readFile, writeFile } from "fs/promises";
 
 export const config = {
   api: { bodyParser: false }
@@ -53,7 +52,8 @@ export default async function handler(req, res) {
       const fullPath = path.join(tmpDir, name);
 
       try {
-        await writeFile(fullPath, await readFile(file.filepath));
+        // ✅ Rename instead of reading/writing again
+        await fs.promises.rename(file.filepath, fullPath);
 
         globalThis.uploadedFiles = globalThis.uploadedFiles || {};
         globalThis.uploadedFiles[name] = fullPath;
@@ -66,7 +66,7 @@ export default async function handler(req, res) {
 
         res.status(200).json({ url });
       } catch (err) {
-        console.error("[POST] Write failed:", err);
+        console.error("[POST] Rename failed:", err);
         res.status(500).json({ error: "Failed to save file" });
       }
     });
