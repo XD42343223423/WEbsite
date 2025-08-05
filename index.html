@@ -11,7 +11,8 @@
 
   <script>
     async function upload() {
-      const file = document.getElementById("fileInput").files[0];
+      const fileInput = document.getElementById("fileInput");
+      const file = fileInput.files[0];
       if (!file) return alert("Pick a file");
 
       const formData = new FormData();
@@ -26,10 +27,14 @@
         if (!res.ok) throw new Error(await res.text());
         const data = await res.json();
 
+        console.log("[✓] Uploaded URL:", data.url);
+
         document.getElementById("link").innerHTML = `
           ✅ Uploaded: <a href="${data.url}" target="_blank" style="color:lightgreen;">${data.url}</a><br>
-          <img src="${data.url}" alt="Uploaded Image" style="max-width:400px;margin-top:10px;">
+          <img src="${data.url}" alt="Uploaded Image" style="max-width:400px;margin-top:10px;border:2px solid #444;">
         `;
+
+        fileInput.value = ""; // Clear file input after upload
       } catch (err) {
         alert("Upload failed.");
         console.error(err);
