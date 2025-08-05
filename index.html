@@ -1,21 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Image Uploader</title>
+  <title>Instant Image Upload</title>
 </head>
 <body style="background:#111;color:white;text-align:center;padding:40px;font-family:sans-serif">
-  <h1>Upload Image</h1>
-  <input type="file" id="fileInput"><br><br>
-  <button onclick="upload()">Upload</button>
-  <p id="link" style="margin-top:20px;"></p>
+  <h1>Upload an Image</h1>
+  <input type="file" id="fileInput" /><br><br>
+  <img id="uploadedImage" style="max-width:90vw;max-height:80vh;display:none;border:2px solid #444;margin-top:20px;"/>
 
   <script>
-    async function upload() {
-      const fileInput = document.getElementById("fileInput");
-      const file = fileInput.files[0];
-      if (!file) return alert("Pick a file");
-
-      console.log("[DEBUG] File selected:", file);
+    document.getElementById("fileInput").addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
 
       const formData = new FormData();
       formData.append("file", file);
@@ -23,25 +19,18 @@
       try {
         const res = await fetch("/api/upload", {
           method: "POST",
-          body: formData,
+          body: formData
         });
 
-        if (!res.ok) throw new Error(await res.text());
         const data = await res.json();
-
-        console.log("[✓] Uploaded URL:", data.url);
-
-        document.getElementById("link").innerHTML = `
-          ✅ Uploaded: <a href="${data.url}" target="_blank" style="color:lightgreen;">${data.url}</a><br>
-          <img src="${data.url}" alt="Uploaded Image" style="max-width:400px;margin-top:10px;border:2px solid #444;">
-        `;
-
-        fileInput.value = "";
+        const img = document.getElementById("uploadedImage");
+        img.src = data.url + "&raw=1";
+        img.style.display = "block";
       } catch (err) {
         alert("Upload failed.");
-        console.error("[ERROR]", err);
+        console.error(err);
       }
-    }
+    });
   </script>
 </body>
 </html>
