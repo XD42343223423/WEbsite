@@ -15,6 +15,8 @@
       const file = fileInput.files[0];
       if (!file) return alert("Pick a file");
 
+      console.log("[DEBUG] File selected:", file);
+
       const formData = new FormData();
       formData.append("file", file);
 
@@ -34,10 +36,10 @@
           <img src="${data.url}" alt="Uploaded Image" style="max-width:400px;margin-top:10px;border:2px solid #444;">
         `;
 
-        fileInput.value = ""; // Clear file input after upload
+        fileInput.value = "";
       } catch (err) {
         alert("Upload failed.");
-        console.error(err);
+        console.error("[ERROR]", err);
       }
     }
   </script>
