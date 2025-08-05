@@ -23,14 +23,10 @@
           body: formData,
         });
 
-        if (!res.ok) {
-          const errorText = await res.text();
-          throw new Error(errorText);
-        }
-
+        if (!res.ok) throw new Error(await res.text());
         const data = await res.json();
-        const link = document.getElementById("link");
-        link.innerHTML = `
+
+        document.getElementById("link").innerHTML = `
           ✅ Uploaded: <a href="${data.url}" target="_blank" style="color:lightgreen;">${data.url}</a><br>
           <img src="${data.url}" alt="Uploaded Image" style="max-width:400px;margin-top:10px;">
         `;
