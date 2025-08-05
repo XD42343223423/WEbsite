@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Image Upload & Link Generator</title>
+  <title>In-Memory Image Links</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,53 +10,85 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 1.5rem;
+      gap: 1.2rem;
       background: #f0f0f0;
     }
 
     input[type="file"] {
       padding: 1rem;
-      border: 1px solid #ccc;
-      background: white;
       border-radius: 8px;
+    }
+
+    .image-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      align-items: center;
     }
 
     img {
       max-width: 300px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
 
-    input[type="text"] {
-      width: 100%;
-      max-width: 400px;
-      padding: 0.5rem;
-      font-size: 1rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
+    .link {
+      word-break: break-all;
+      background: #eee;
+      padding: 10px;
+      border-radius: 5px;
     }
   </style>
 </head>
 <body>
 
-  <h2>Select an Image</h2>
-  <input type="file" accept="image/*" id="imageInput" />
-  <img id="preview" style="display:none;" />
-  <input type="text" id="linkOutput" readonly placeholder="Image link will appear here" />
+  <h2>Select Image</h2>
+  <input type="file" id="imageInput" accept="image/*" />
+  <div id="gallery"></div>
 
   <script>
-    const input = document.getElementById('imageInput');
-    const img = document.getElementById('preview');
-    const linkOutput = document.getElementById('linkOutput');
+    const imageInput = document.getElementById("imageInput");
+    const gallery = document.getElementById("gallery");
 
-    input.addEventListener('change', function() {
-      const file = this.files[0];
+    function saveLinks(links) {
+      localStorage.setItem("image_links", JSON.stringify(links));
+    }
+
+    function loadLinks() {
+      return JSON.parse(localStorage.getItem("image_links") || "[]");
+    }
+
+    function displayImage(url) {
+      const container = document.createElement("div");
+      container.className = "image-container";
+
+      const img = document.createElement("img");
+      img.src = url;
+
+      const link = document.createElement("div");
+      link.className = "link";
+      link.innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
+
+      container.appendChild(img);
+      container.appendChild(link);
+      gallery.appendChild(container);
+    }
+
+    imageInput.addEventListener("change", () => {
+      const file = imageInput.files[0];
       if (file) {
         const blobURL = URL.createObjectURL(file);
-        img.src = blobURL;
-        img.style.display = 'block';
-        linkOutput.value = blobURL;
+        const links = loadLinks();
+        links.push(blobURL);
+        saveLinks(links);
+        displayImage(blobURL);
       }
+    });
+
+    // On page load, restore all previous blob links
+    window.addEventListener("DOMContentLoaded", () => {
+      const links = loadLinks();
+      links.forEach(url => displayImage(url));
     });
   </script>
 
