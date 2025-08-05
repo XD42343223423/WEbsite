@@ -11,7 +11,6 @@ const tmpDir = "/tmp/uploads";
 fs.mkdirSync(tmpDir, { recursive: true });
 
 export default async function handler(req, res) {
-  // Serve image if GET
   if (req.method === "GET") {
     const id = req.query.id;
     const filepath = globalThis.uploadedFiles?.[id];
@@ -33,7 +32,6 @@ export default async function handler(req, res) {
     return fs.createReadStream(filepath).pipe(res);
   }
 
-  // Handle file upload
   if (req.method === "POST") {
     const form = formidable({ multiples: false, uploadDir: tmpDir, keepExtensions: true });
 
@@ -53,7 +51,7 @@ export default async function handler(req, res) {
       globalThis.uploadedFiles[name] = fullPath;
 
       const base = req.headers.host.startsWith("localhost") ? "http" : "https";
-      const url = `${base}://${req.headers.host}/api/api.js?id=${encodeURIComponent(name)}`;
+      const url = `${base}://${req.headers.host}/api/upload?id=${encodeURIComponent(name)}`;
 
       res.status(200).json({ url });
     });
