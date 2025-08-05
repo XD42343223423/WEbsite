@@ -3,24 +3,32 @@ import path from "path";
 
 export default async function handler(req, res) {
   const id = req.query.id;
-  const filepath = globalThis.uploadedFiles?.[id];
+  const filePath = globalThis.uploadedFiles?.[id];
 
-  if (!filepath || !fs.existsSync(filepath)) {
-    console.error("[IMAGE API] File not found:", id);
-    res.status(404).send("File not found");
-    return;
+  if (!filePath || !fs.existsSync(filePath)) {
+    return res.status(404).send("Not found");
   }
 
-  const ext = path.extname(filepath).toLowerCase();
-  const mimeTypes = {
+  const ext = path.extname(filePath).toLowerCase();
+  const mime = {
     ".jpg": "image/jpeg",
     ".jpeg": "image/jpeg",
     ".png": "image/png",
     ".gif": "image/gif",
     ".webp": "image/webp"
-  };
+  }[ext] || "application/octet-stream";
 
-  const mime = mimeTypes[ext] || "application/octet-stream";
-  res.setHeader("Content-Type", mime);
-  fs.createReadStream(filepath).pipe(res);
+  // ?raw=1 returns just image
+  if (req.query.raw === "1") {
+    res.setHeader("Content-Type", mime);
+    return fs.createReadStream(filePath).pipe(res);
+  }
+
+  // Otherwise show minimal preview page
+  res.setHeader("Content-Type", "text/html");
+  res.end(`
+    <html style="background:#111;color:white;display:flex;align-items:center;justify-content:center;height:100vh;">
+      <img src="/api/image?id=${encodeURIComponent(id)}&raw=1" style="max-width:90vw;max-height:90vh;border:2px solid #444;">
+    </html>
+  `);
 }
