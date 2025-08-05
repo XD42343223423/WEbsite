@@ -6,6 +6,7 @@ export default async function handler(req, res) {
   const filepath = globalThis.uploadedFiles?.[id];
 
   if (!filepath || !fs.existsSync(filepath)) {
+    console.error("[IMAGE API] File not found:", id);
     res.status(404).send("File not found");
     return;
   }
