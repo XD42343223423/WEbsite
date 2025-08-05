@@ -1,35 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Instant Image Upload</title>
+  <title>Simple Image Preview</title>
 </head>
-<body style="background:#111;color:white;text-align:center;padding:40px;font-family:sans-serif">
-  <h1>Upload an Image</h1>
-  <input type="file" id="fileInput" /><br><br>
-  <img id="uploadedImage" style="max-width:90vw;max-height:80vh;display:none;border:2px solid #444;margin-top:20px;"/>
+<body style="background:#111;color:#fff;text-align:center;padding:40px;font-family:sans-serif">
+  <h1>Select an Image</h1>
+  <input type="file" id="fileInput" accept="image/*"><br><br>
+  <img id="preview" style="max-width:90vw;max-height:80vh;display:none;border:2px solid #444;margin-top:20px;">
 
   <script>
-    document.getElementById("fileInput").addEventListener("change", async (event) => {
-      const file = event.target.files[0];
+    document.getElementById("fileInput").addEventListener("change", function () {
+      const file = this.files[0];
       if (!file) return;
 
-      const formData = new FormData();
-      formData.append("file", file);
-
-      try {
-        const res = await fetch("/api/upload", {
-          method: "POST",
-          body: formData
-        });
-
-        const data = await res.json();
-        const img = document.getElementById("uploadedImage");
-        img.src = data.url + "&raw=1";
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = document.getElementById("preview");
+        img.src = e.target.result;
         img.style.display = "block";
-      } catch (err) {
-        alert("Upload failed.");
-        console.error(err);
-      }
+      };
+      reader.readAsDataURL(file);
     });
   </script>
 </body>
