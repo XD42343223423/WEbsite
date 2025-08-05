@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Image Uploader</title>
+  <style>
+    body {
+      background: #111;
+      color: white;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 50px;
+    }
+    input[type="file"] {
+      padding: 10px;
+      background: #222;
+      border: 1px solid #555;
+      border-radius: 5px;
+      color: white;
+    }
+    img {
+      margin-top: 20px;
+      max-width: 90vw;
+      max-height: 80vh;
+      border: 2px solid #444;
+      display: none;
+    }
+    a {
+      color: #4caf50;
+      text-decoration: none;
+      display: block;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Upload an Image</h1>
+  <input type="file" id="fileInput" accept="image/*">
+  <img id="preview">
+  <a id="link" target="_blank"></a>
+
+  <script>
+    document.getElementById("fileInput").addEventListener("change", async function () {
+      const file = this.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = document.getElementById("preview");
+        img.src = e.target.result;
+        img.style.display = "block";
+      };
+      reader.readAsDataURL(file);
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await res.json();
+        const link = document.getElementById("link");
+        link.href = data.url;
+        link.textContent = "🔗 View Uploaded Image";
+      } catch (err) {
+        console.error("Upload failed:", err);
+        alert("Upload failed.");
+      }
+    });
+  </script>
+</body>
+</html>
