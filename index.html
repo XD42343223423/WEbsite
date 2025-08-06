@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Upload & Short Link</title>
+  <title>Short Image Viewer</title>
   <style>
     body {
       font-family: sans-serif;
@@ -10,75 +10,114 @@
       flex-direction: column;
       align-items: center;
       padding: 2rem;
-      background: #f0f0f0;
+      background: #f4f4f4;
     }
 
-    .block {
-      margin-bottom: 1.5rem;
-      text-align: center;
+    input[type="file"] {
+      margin-bottom: 1rem;
+    }
+
+    .image-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 2rem;
     }
 
     img {
       max-width: 300px;
-      border-radius: 8px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+      border-radius: 10px;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
 
     .link {
-      margin-top: 0.5rem;
+      background: #e0e0e0;
       padding: 10px;
-      background: #ddd;
-      border-radius: 6px;
-      word-break: break-all;
+      border-radius: 5px;
+      word-break: break-word;
     }
   </style>
 </head>
 <body>
 
-  <h2>Select an Image</h2>
-  <input type="file" id="fileInput" accept="image/*" />
-  <div id="gallery"></div>
+  <h2>Upload Image</h2>
+  <input type="file" accept="image/*" id="imageInput" />
+  <div id="imageGallery"></div>
 
   <script>
-    const fileInput = document.getElementById("fileInput");
-    const gallery = document.getElementById("gallery");
+    const imageInput = document.getElementById("imageInput");
+    const imageGallery = document.getElementById("imageGallery");
 
-    fileInput.addEventListener("change", () => {
-      const file = fileInput.files[0];
+    function saveImage(base64) {
+      let stored = JSON.parse(localStorage.getItem("stored_images") || "[]");
+      stored.push(base64);
+      localStorage.setItem("stored_images", JSON.stringify(stored));
+      return stored.length - 1; // index
+    }
+
+    function getShortLink(index) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("img", index);
+      return url.toString();
+    }
+
+    function displayImage(base64, index) {
+      const container = document.createElement("div");
+      container.className = "image-block";
+
+      const img = document.createElement("img");
+      img.src = base64;
+
+      const link = document.createElement("div");
+      link.className = "link";
+      link.innerHTML = `<a href="${getShortLink(index)}" target="_blank">${getShortLink(index)}</a>`;
+
+      container.appendChild(img);
+      container.appendChild(link);
+      imageGallery.appendChild(container);
+    }
+
+    function loadImages() {
+      const stored = JSON.parse(localStorage.getItem("stored_images") || "[]");
+      stored.forEach((base64, index) => {
+        displayImage(base64, index);
+      });
+    }
+
+    imageInput.addEventListener("change", () => {
+      const file = imageInput.files[0];
       if (!file) return;
 
-      const formData = new FormData();
-      formData.append("file", file);
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const base64 = e.target.result;
+        const index = saveImage(base64);
+        displayImage(base64, index);
+      };
+      reader.readAsDataURL(file);
+    });
 
-      fetch("https://0x0.st", {
-        method: "POST",
-        body: formData
-      })
-      .then(res => res.text())
-      .then(url => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const base64 = e.target.result;
-          const div = document.createElement("div");
-          div.className = "block";
-
+    function loadByParam() {
+      const params = new URLSearchParams(window.location.search);
+      const imgIndex = parseInt(params.get("img"));
+      if (!isNaN(imgIndex)) {
+        const stored = JSON.parse(localStorage.getItem("stored_images") || "[]");
+        const base64 = stored[imgIndex];
+        if (base64) {
+          document.body.innerHTML = ''; // Clear page
           const img = document.createElement("img");
           img.src = base64;
+          document.body.appendChild(img);
+        } else {
+          alert("Invalid image ID");
+        }
+      } else {
+        loadImages();
+      }
+    }
 
-          const link = document.createElement("div");
-          link.className = "link";
-          link.innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
-
-          div.appendChild(img);
-          div.appendChild(link);
-          gallery.appendChild(div);
-        };
-        reader.readAsDataURL(file);
-      })
-      .catch(err => {
-        alert("Upload failed: " + err.message);
-      });
-    });
+    loadByParam();
   </script>
 
 </body>
