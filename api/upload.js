@@ -3,74 +3,26 @@ import fs from "fs";
 import path from "path";
 
 export const config = {
-  api: { bodyParser: false }
+  api: {
+    bodyParser: false,
+  },
 };
 
-const tmpDir = "/tmp/uploads";
-fs.mkdirSync(tmpDir, { recursive: true });
+const uploadDir = path.join(process.cwd(), "/public/images");
 
 export default async function handler(req, res) {
-  if (req.method === "GET") {
-    const id = req.query.id;
-    const filepath = globalThis.uploadedFiles?.[id];
+  if (req.method !== "POST") return res.status(405).end("Method Not Allowed");
 
-    if (!filepath || !fs.existsSync(filepath)) {
-      console.error("[GET] File not found:", id);
-      return res.status(404).send("Not found");
-    }
+  const form = formidable({ multiples: false, uploadDir, keepExtensions: true });
 
-    const ext = path.extname(filepath).toLowerCase();
-    const mime = {
-      ".jpg": "image/jpeg",
-      ".jpeg": "image/jpeg",
-      ".png": "image/png",
-      ".gif": "image/gif",
-      ".webp": "image/webp"
-    }[ext] || "application/octet-stream";
+  if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
-    console.log("[GET] Serving file:", filepath);
-    res.setHeader("Content-Type", mime);
-    return fs.createReadStream(filepath).pipe(res);
-  }
+  form.parse(req, (err, fields, files) => {
+    if (err) return res.status(500).json({ error: "Upload failed" });
 
-  if (req.method === "POST") {
-    console.log("[POST] Upload request received");
-
-    const form = formidable({ multiples: false, uploadDir: tmpDir, keepExtensions: true });
-
-    form.parse(req, async (err, fields, files) => {
-      if (err || !files.file) {
-        console.error("[POST] Form parse failed:", err);
-        return res.status(500).json({ error: "Upload failed" });
-      }
-
-      const file = files.file;
-      console.log("[POST] File received:", file.originalFilename);
-
-      const ext = path.extname(file.originalFilename || ".png");
-      const name = Date.now() + "_" + Math.floor(Math.random() * 999999) + ext;
-      const fullPath = path.join(tmpDir, name);
-
-      try {
-        // ✅ Rename instead of reading/writing again
-        await fs.promises.rename(file.filepath, fullPath);
-
-        globalThis.uploadedFiles = globalThis.uploadedFiles || {};
-        globalThis.uploadedFiles[name] = fullPath;
-
-        const base = req.headers.host.startsWith("localhost") ? "http" : "https";
-        const url = `${base}://${req.headers.host}/api/upload?id=${encodeURIComponent(name)}`;
-
-        console.log("[POST] File saved:", fullPath);
-        console.log("[POST] URL:", url);
-
-        res.status(200).json({ url });
-      } catch (err) {
-        console.error("[POST] Rename failed:", err);
-        res.status(500).json({ error: "Failed to save file" });
-      }
-    });
-  } else {
-    res.status(405).send("Method Not Allowed");
-  }
+    const file = files.file[0];
+    const fileName = path.basename(file.filepath);
+    const url = `/images/${fileName}`;
+    return res.status(200).json({ url });
+  });
 }
