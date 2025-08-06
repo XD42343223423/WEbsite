@@ -1,0 +1,9 @@
+{
+  "name": "image-uploader",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "formidable": "^3.5.0"
+  }
+}
