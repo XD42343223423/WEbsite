@@ -2,62 +2,131 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Image Uploader</title>
+  <title>Self-Hosted Image Upload</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       font-family: sans-serif;
       text-align: center;
       padding: 2rem;
-      background: #f0f0f0;
+      background: #f4f4f4;
     }
 
     input, button {
-      margin-top: 1rem;
+      margin: 1rem 0;
     }
 
     img {
-      max-width: 300px;
+      max-width: 320px;
       margin-top: 1rem;
-      border-radius: 10px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 
     .link {
       margin-top: 1rem;
-      word-break: break-word;
+      word-break: break-all;
       background: #eee;
       padding: 10px;
       border-radius: 6px;
+      display: inline-block;
+      max-width: 90%;
+    }
+
+    .top-bar {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+    }
+
+    .top-bar button {
+      background: crimson;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-  <h2>Upload Image (Embeds in Discord)</h2>
-  <input type="file" id="fileInput" />
+  <div class="top-bar">
+    <button onclick="clearAll()">Clear All</button>
+  </div>
+
+  <h2>Upload Image</h2>
+  <input type="file" id="imageInput" />
   <button onclick="upload()">Upload</button>
-  <img id="preview" />
-  <div class="link" id="linkOutput"></div>
+
+  <div id="gallery"></div>
 
   <script>
-    async function upload() {
-      const file = document.getElementById('fileInput').files[0];
-      if (!file) return alert('No file selected.');
+    const gallery = document.getElementById("gallery");
 
-      const formData = new FormData();
-      formData.append('file', file);
+    function saveImage(base64) {
+      const stored = JSON.parse(localStorage.getItem("images") || "[]");
+      stored.push(base64);
+      localStorage.setItem("images", JSON.stringify(stored));
+      return stored.length - 1;
+    }
 
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
-      });
-
-      const data = await res.json();
-      if (data.url) {
-        document.getElementById('preview').src = data.url;
-        document.getElementById('linkOutput').innerHTML = `<a href="${data.url}" target="_blank">${data.url}</a>`;
-      } else {
-        alert('Upload failed.');
+    function clearAll() {
+      if (confirm("Are you sure you want to clear all stored images?")) {
+        localStorage.removeItem("images");
+        location.href = "/";
       }
+    }
+
+    function upload() {
+      const file = document.getElementById("imageInput").files[0];
+      if (!file) return alert("Select an image");
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const base64 = e.target.result;
+        const index = saveImage(base64);
+        showImage(base64, index);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function showImage(base64, index) {
+      const img = document.createElement("img");
+      img.src = base64;
+
+      const link = document.createElement("div");
+      link.className = "link";
+      const linkURL = `${location.origin}${location.pathname}?img=${index}`;
+      link.innerHTML = `<a href="${linkURL}" target="_blank">${linkURL}</a>`;
+
+      const wrap = document.createElement("div");
+      wrap.appendChild(img);
+      wrap.appendChild(link);
+      gallery.appendChild(wrap);
+    }
+
+    function loadAll() {
+      const stored = JSON.parse(localStorage.getItem("images") || "[]");
+      stored.forEach((img, i) => showImage(img, i));
+    }
+
+    function loadSingle(index) {
+      const stored = JSON.parse(localStorage.getItem("images") || "[]");
+      const base64 = stored[index];
+      if (!base64) {
+        document.body.innerHTML = "<h2>Image not found.</h2>";
+        return;
+      }
+
+      document.body.innerHTML = `<img src="${base64}" style="max-width:100%;margin-top:2rem;">`;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("img")) {
+      loadSingle(parseInt(params.get("img")));
+    } else {
+      loadAll();
     }
   </script>
 
