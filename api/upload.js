@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     const fileExt = path.extname(file.originalFilename || ".jpg");
     const fileName = randomBytes(6).toString("hex") + fileExt;
     const fileData = readFileSync(file.filepath);
-    unlinkSync(file.filepath); // cleanup
+    unlinkSync(file.filepath);
 
     globalThis.imageMap.set(fileName, {
       content: fileData,
