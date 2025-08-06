@@ -1,5 +1,5 @@
 {
-  "name": "discord-image-host",
+  "name": "image-upload-discord",
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
