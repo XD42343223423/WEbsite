@@ -2,19 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Short Image Viewer</title>
+  <title>Image Saver</title>
+  <meta property="og:title" content="Shared Image" />
+  <meta property="og:description" content="An image shared via Image Saver" />
+  <meta property="og:image" content="" id="ogImage" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       font-family: sans-serif;
+      padding: 2rem;
+      margin: 0;
+      background: #f4f4f4;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 2rem;
-      background: #f4f4f4;
+    }
+
+    .top-bar {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+    }
+
+    .top-bar button {
+      background: crimson;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    h2 {
+      margin-top: 3rem;
     }
 
     input[type="file"] {
-      margin-bottom: 1rem;
+      margin: 1rem 0;
     }
 
     .image-block {
@@ -36,10 +60,16 @@
       padding: 10px;
       border-radius: 5px;
       word-break: break-word;
+      text-align: center;
+      width: 320px;
     }
   </style>
 </head>
 <body>
+
+  <div class="top-bar">
+    <button onclick="clearAll()">Clear All</button>
+  </div>
 
   <h2>Upload Image</h2>
   <input type="file" accept="image/*" id="imageInput" />
@@ -53,7 +83,7 @@
       let stored = JSON.parse(localStorage.getItem("stored_images") || "[]");
       stored.push(base64);
       localStorage.setItem("stored_images", JSON.stringify(stored));
-      return stored.length - 1; // index
+      return stored.length - 1;
     }
 
     function getShortLink(index) {
@@ -78,11 +108,34 @@
       imageGallery.appendChild(container);
     }
 
-    function loadImages() {
+    function loadAllImages() {
       const stored = JSON.parse(localStorage.getItem("stored_images") || "[]");
       stored.forEach((base64, index) => {
         displayImage(base64, index);
       });
+    }
+
+    function clearAll() {
+      if (confirm("Are you sure you want to clear all stored images?")) {
+        localStorage.removeItem("stored_images");
+        location.reload();
+      }
+    }
+
+    function displaySingleImage(index) {
+      const stored = JSON.parse(localStorage.getItem("stored_images") || "[]");
+      const base64 = stored[index];
+      if (!base64) return document.body.innerHTML = "<h2>Image not found.</h2>";
+
+      document.getElementById("ogImage").setAttribute("content", base64);
+      document.body.innerHTML = ""; // Clear all content
+
+      const img = document.createElement("img");
+      img.src = base64;
+      img.style.maxWidth = "100%";
+      img.style.borderRadius = "10px";
+      img.style.margin = "2rem auto";
+      document.body.appendChild(img);
     }
 
     imageInput.addEventListener("change", () => {
@@ -98,26 +151,13 @@
       reader.readAsDataURL(file);
     });
 
-    function loadByParam() {
-      const params = new URLSearchParams(window.location.search);
-      const imgIndex = parseInt(params.get("img"));
-      if (!isNaN(imgIndex)) {
-        const stored = JSON.parse(localStorage.getItem("stored_images") || "[]");
-        const base64 = stored[imgIndex];
-        if (base64) {
-          document.body.innerHTML = ''; // Clear page
-          const img = document.createElement("img");
-          img.src = base64;
-          document.body.appendChild(img);
-        } else {
-          alert("Invalid image ID");
-        }
-      } else {
-        loadImages();
-      }
+    const params = new URLSearchParams(window.location.search);
+    const imgIndex = params.get("img");
+    if (imgIndex !== null) {
+      displaySingleImage(parseInt(imgIndex));
+    } else {
+      loadAllImages();
     }
-
-    loadByParam();
   </script>
 
 </body>
