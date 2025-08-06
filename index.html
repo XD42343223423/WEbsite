@@ -2,161 +2,42 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Image Saver</title>
-  <meta property="og:title" content="Shared Image" />
-  <meta property="og:description" content="An image shared via Image Saver" />
-  <meta property="og:image" content="" id="ogImage" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload Image</title>
   <style>
-    body {
-      font-family: sans-serif;
-      padding: 2rem;
-      margin: 0;
-      background: #f4f4f4;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .top-bar {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-    }
-
-    .top-bar button {
-      background: crimson;
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    h2 {
-      margin-top: 3rem;
-    }
-
-    input[type="file"] {
-      margin: 1rem 0;
-    }
-
-    .image-block {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-bottom: 2rem;
-    }
-
-    img {
-      max-width: 300px;
-      border-radius: 10px;
-      margin-bottom: 0.5rem;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
-
-    .link {
-      background: #e0e0e0;
-      padding: 10px;
-      border-radius: 5px;
-      word-break: break-word;
-      text-align: center;
-      width: 320px;
-    }
+    body { font-family: sans-serif; text-align: center; padding: 2rem; background: #f4f4f4; }
+    input, button { margin-top: 1rem; }
+    img { max-width: 300px; margin-top: 1rem; }
+    .link { margin-top: 1rem; word-break: break-all; background: #eee; padding: 10px; border-radius: 6px; }
   </style>
 </head>
 <body>
 
-  <div class="top-bar">
-    <button onclick="clearAll()">Clear All</button>
-  </div>
-
-  <h2>Upload Image</h2>
-  <input type="file" accept="image/*" id="imageInput" />
-  <div id="imageGallery"></div>
+  <h2>Upload Image for Discord</h2>
+  <input type="file" id="fileInput" />
+  <button onclick="upload()">Upload</button>
+  <img id="preview" />
+  <div class="link" id="linkOutput"></div>
 
   <script>
-    const imageInput = document.getElementById("imageInput");
-    const imageGallery = document.getElementById("imageGallery");
+    async function upload() {
+      const file = document.getElementById('fileInput').files[0];
+      if (!file) return alert('No file selected.');
 
-    function saveImage(base64) {
-      let stored = JSON.parse(localStorage.getItem("stored_images") || "[]");
-      stored.push(base64);
-      localStorage.setItem("stored_images", JSON.stringify(stored));
-      return stored.length - 1;
-    }
+      const formData = new FormData();
+      formData.append('file', file);
 
-    function getShortLink(index) {
-      const url = new URL(window.location.href);
-      url.searchParams.set("img", index);
-      return url.toString();
-    }
-
-    function displayImage(base64, index) {
-      const container = document.createElement("div");
-      container.className = "image-block";
-
-      const img = document.createElement("img");
-      img.src = base64;
-
-      const link = document.createElement("div");
-      link.className = "link";
-      link.innerHTML = `<a href="${getShortLink(index)}" target="_blank">${getShortLink(index)}</a>`;
-
-      container.appendChild(img);
-      container.appendChild(link);
-      imageGallery.appendChild(container);
-    }
-
-    function loadAllImages() {
-      const stored = JSON.parse(localStorage.getItem("stored_images") || "[]");
-      stored.forEach((base64, index) => {
-        displayImage(base64, index);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
       });
-    }
 
-    function clearAll() {
-      if (confirm("Are you sure you want to clear all stored images?")) {
-        localStorage.removeItem("stored_images");
-        location.reload();
+      const data = await res.json();
+      if (data.url) {
+        document.getElementById('preview').src = data.url;
+        document.getElementById('linkOutput').innerHTML = `<a href="${data.url}" target="_blank">${data.url}</a>`;
+      } else {
+        alert('Upload failed.');
       }
-    }
-
-    function displaySingleImage(index) {
-      const stored = JSON.parse(localStorage.getItem("stored_images") || "[]");
-      const base64 = stored[index];
-      if (!base64) return document.body.innerHTML = "<h2>Image not found.</h2>";
-
-      document.getElementById("ogImage").setAttribute("content", base64);
-      document.body.innerHTML = ""; // Clear all content
-
-      const img = document.createElement("img");
-      img.src = base64;
-      img.style.maxWidth = "100%";
-      img.style.borderRadius = "10px";
-      img.style.margin = "2rem auto";
-      document.body.appendChild(img);
-    }
-
-    imageInput.addEventListener("change", () => {
-      const file = imageInput.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const base64 = e.target.result;
-        const index = saveImage(base64);
-        displayImage(base64, index);
-      };
-      reader.readAsDataURL(file);
-    });
-
-    const params = new URLSearchParams(window.location.search);
-    const imgIndex = params.get("img");
-    if (imgIndex !== null) {
-      displaySingleImage(parseInt(imgIndex));
-    } else {
-      loadAllImages();
     }
   </script>
 
